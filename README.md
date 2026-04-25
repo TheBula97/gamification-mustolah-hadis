@@ -95,5 +95,5 @@ Struktur asas projek:
 
 ```text
 fishing-for-hadith/
-├── index.html
+├── fishing_for_hadith_full_mode_final.html
 └── README.md
