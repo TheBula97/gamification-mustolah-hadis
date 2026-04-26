@@ -195,6 +195,12 @@ select{padding:12px 14px; background:rgba(255,255,255,.06); color:var(--text); b
 .bait-actions{display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-top:12px;}
 .bait-actions button{width:100%;}
 .bait-note{margin-top:10px; color:#fde68a; font-size:.86rem; line-height:1.45;}
+.reset-modal{position:fixed; inset:0; z-index:29; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.55); padding:16px; backdrop-filter:blur(6px);}
+.reset-modal.open{display:flex}
+.reset-box{width:min(520px, 100%); background:linear-gradient(180deg, rgba(15,36,59,.98), rgba(9,22,36,.98)); border:1px solid rgba(251,113,133,.24); border-radius:22px; box-shadow:0 20px 60px rgba(0,0,0,.45); overflow:hidden;}
+.reset-box .card-header{border-bottom:1px solid rgba(251,113,133,.15);}
+.reset-actions{display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-top:14px;}
+.reset-actions button{width:100%;}
 .legend{display:grid; grid-template-columns:repeat(2,1fr); gap:10px;}
 .left-stack .legend{grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px;}
 @media (max-width:640px){ .legend{grid-template-columns:1fr} }
@@ -672,6 +678,21 @@ select{padding:12px 14px; background:rgba(255,255,255,.06); color:var(--text); b
         <button class="btn-secondary" id="baitModalBuy5Btn" type="button">Beli 5 Umpan</button>
         <button class="btn-secondary" id="baitModalSellAllBtn" type="button">Jual Semua Ikan</button>
         <button class="btn-secondary" id="baitModalCloseBtn" type="button">Tutup</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="reset-modal" id="resetModal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="resetModalTitle">
+  <div class="reset-box" tabindex="-1">
+    <div class="card-header">
+      <h3 id="resetModalTitle">Reset Progress?</h3>
+    </div>
+    <div class="card-body">
+      <div class="small-muted" id="resetModalMessage">Padam semua progress, markah, coins, umpan, dan stor ikan?</div>
+      <div class="reset-actions">
+        <button class="btn-danger" id="resetConfirmBtn" type="button">Ya, Reset</button>
+        <button class="btn-secondary" id="resetCancelBtn" type="button">Batal</button>
       </div>
     </div>
   </div>
@@ -6861,7 +6882,8 @@ const state = {
   lastFocusedElement: null,
   currentMode: "form4",
   selectedTopics: [],
-  baitModalReturnFocus: null
+  baitModalReturnFocus: null,
+  resetModalReturnFocus: null
 };
 
 const el = {
@@ -6907,6 +6929,11 @@ const el = {
   baitModalBuy5Btn: document.getElementById("baitModalBuy5Btn"),
   baitModalSellAllBtn: document.getElementById("baitModalSellAllBtn"),
   baitModalCloseBtn: document.getElementById("baitModalCloseBtn"),
+  resetModal: document.getElementById("resetModal"),
+  resetBox: document.querySelector("#resetModal .reset-box"),
+  resetModalMessage: document.getElementById("resetModalMessage"),
+  resetConfirmBtn: document.getElementById("resetConfirmBtn"),
+  resetCancelBtn: document.getElementById("resetCancelBtn"),
   questionModal: document.getElementById("questionModal"),
   modalBox: document.querySelector(".modal-box"),
   modalTitle: document.getElementById("modalTitle"),
@@ -7478,6 +7505,25 @@ function closeBaitModal(){
   state.baitModalReturnFocus = null;
 }
 
+function openResetModal(){
+  if (!el.resetModal) return;
+  state.resetModalReturnFocus = document.activeElement;
+  el.resetModalMessage.textContent = `Padam semua progress, markah, coins, umpan, dan stor ikan untuk ${MODES[state.currentMode].label}?`;
+  el.resetModal.classList.add("open");
+  el.resetModal.setAttribute("aria-hidden", "false");
+  if (el.resetCancelBtn) el.resetCancelBtn.focus();
+}
+
+function closeResetModal(){
+  if (!el.resetModal) return;
+  el.resetModal.classList.remove("open");
+  el.resetModal.setAttribute("aria-hidden", "true");
+  if (state.resetModalReturnFocus && typeof state.resetModalReturnFocus.focus === "function") {
+    state.resetModalReturnFocus.focus();
+  }
+  state.resetModalReturnFocus = null;
+}
+
 function buyBaitAndCast(amount){
   if (!state.sessionActive || state.phase !== "idle") return;
   const bought = buyBait(amount);
@@ -7737,6 +7783,10 @@ function closeQuestionModal(){
 }
 
 function handleModalKeydown(event){
+  if (el.resetModal?.classList.contains("open") && event.key === "Escape") {
+    closeResetModal();
+    return;
+  }
   if (!el.questionModal.classList.contains("open") || event.key !== "Tab") return;
   const focusable = [...el.questionModal.querySelectorAll("button:not(:disabled):not([hidden]), [tabindex]:not([tabindex='-1'])")];
   if (!focusable.length) {
@@ -7821,13 +7871,20 @@ function sellAllInventory(){
 }
 
 function resetAll(){
-  if (!confirm(`Padam semua progress, markah, coins, umpan, dan stor ikan untuk ${MODES[state.currentMode].label}?`)) return;
+  openResetModal();
+}
+
+function performResetAll(){
   localStorage.removeItem(storageKey());
   clearInterval(state.sessionInterval);
+  clearInterval(state.timerInterval);
+  clearTimeout(state.waitTimeout);
   resetProgressFields();
   state.selectedTopics = getModeTopics().map(topic => topic.topicId);
   resetFishingScene();
   closeQuestionModal();
+  closeBaitModal();
+  closeResetModal();
   state.phase = "idle";
   setTopicSelectorLocked(false);
   setStatus("Progress telah direset. Sedia untuk mula semula.");
@@ -7835,6 +7892,7 @@ function resetAll(){
   updateHud();
   renderCollection();
   logMessage("🧹 Semua progress telah direset.");
+  playSound("end");
   saveState();
 }
 
@@ -7907,6 +7965,8 @@ if (el.soundToggleBtn) {
   });
 }
 el.resetBtn.addEventListener("click", runWithAudio(resetAll));
+if (el.resetConfirmBtn) el.resetConfirmBtn.addEventListener("click", runWithAudio(performResetAll));
+if (el.resetCancelBtn) el.resetCancelBtn.addEventListener("click", runWithAudio(closeResetModal, null));
 el.buy1Btn.addEventListener("click", runWithAudio(() => buyBait(1)));
 el.buy5Btn.addEventListener("click", runWithAudio(() => buyBait(5)));
 if (el.baitModalBuy1Btn) el.baitModalBuy1Btn.addEventListener("click", runWithAudio(() => buyBaitAndCast(1), null));
