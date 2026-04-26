@@ -7090,6 +7090,14 @@ function showTopicWarning(text){
   el.topicWarning.classList.toggle("show", Boolean(text));
 }
 
+function setTopicSelectorLocked(isLocked){
+  document.querySelectorAll(".topic-choice input[type='checkbox']").forEach(input => {
+    input.disabled = isLocked;
+  });
+  if (el.selectAllTopicsBtn) el.selectAllTopicsBtn.disabled = isLocked;
+  if (el.clearTopicsBtn) el.clearTopicsBtn.disabled = isLocked;
+}
+
 function saveState(){
   localStorage.setItem(storageKey(), JSON.stringify({
     score: state.score,
@@ -7192,9 +7200,7 @@ function updateHud(){
   el.startSessionBtn.disabled = state.sessionActive;
   el.sessionSelect.disabled = state.sessionActive;
   el.modeButtons.forEach(btn => btn.disabled = state.sessionActive || state.phase !== "idle");
-  el.topicGrid.querySelectorAll("input").forEach(input => input.disabled = state.sessionActive || state.phase !== "idle");
-  el.selectAllTopicsBtn.disabled = state.sessionActive || state.phase !== "idle";
-  el.clearTopicsBtn.disabled = state.sessionActive || state.phase !== "idle";
+  setTopicSelectorLocked(state.sessionActive || state.phase !== "idle");
 }
 
 function renderFishLegend(){
@@ -7288,9 +7294,11 @@ function renderTopicSelector(){
   el.modeButtons.forEach(btn => {
     btn.classList.toggle("active", btn.dataset.mode === state.currentMode);
   });
+  setTopicSelectorLocked(state.sessionActive || state.phase !== "idle");
 }
 
 function selectAllTopics(){
+  if (state.sessionActive || state.phase !== "idle") return;
   state.selectedTopics = getModeTopics().map(topic => topic.topicId);
   showTopicWarning("");
   renderTopicSelector();
@@ -7298,6 +7306,7 @@ function selectAllTopics(){
 }
 
 function clearTopics(){
+  if (state.sessionActive || state.phase !== "idle") return;
   state.selectedTopics = [];
   renderTopicSelector();
   saveState();
@@ -7377,6 +7386,7 @@ function startSession(){
   state.sessionRemaining = mins * 60;
   state.sessionActive = true;
   state.sessionExpiredPending = false;
+  setTopicSelectorLocked(true);
   updateHud();
   setStatus(`Sesi bermula untuk ${mins} minit. Tekan pada joran untuk melempar umpan.`);
   logMessage(`⏱️ Sesi permainan bermula selama <strong>${mins} minit</strong>.`, "good");
@@ -7408,6 +7418,7 @@ function endSession(reason="timer"){
   state.sessionExpiredPending = false;
   closeBaitModal();
   playSound("end");
+  setTopicSelectorLocked(false);
   updateHud();
   setStatus("Sesi tamat. Pilih masa baru untuk bermain semula.");
   logMessage(reason === "manual" ? "🛑 Sesi permainan ditamatkan oleh pemain." : "🛑 Sesi permainan tamat.", "warn");
@@ -7495,6 +7506,7 @@ function castLine(){
     logMessage("⏱️ Anda perlu mulakan sesi dahulu sebelum memancing.", "bad");
     return;
   }
+  if (!validateSelectedTopicsForPlay()) return;
   if (state.phase !== "idle") return;
   if (state.bait <= 0) {
     openBaitModal();
@@ -7578,6 +7590,7 @@ function openQuestionModal(fish, question){
   shuffledChoices.forEach(({ choice, originalIndex }) => {
     const btn = document.createElement("button");
     btn.className = "answer";
+    btn.dataset.originalIndex = String(originalIndex);
     btn.textContent = choice;
     btn.addEventListener("click", () => {
       initAudio();
@@ -7622,12 +7635,13 @@ function answerQuestion(index, timeout=false){
   const correct = !timeout && index === q.answer;
   const explanation = escapeHtml(q.explain);
 
-  [...el.answerGrid.querySelectorAll(".answer")].forEach((btn, i) => {
+  [...el.answerGrid.querySelectorAll(".answer")].forEach((btn) => {
+    const originalIndex = Number(btn.dataset.originalIndex);
     btn.disabled = true;
-    if (i === q.answer) {
+    if (originalIndex === q.answer) {
       btn.style.background = "rgba(52,211,153,.18)";
       btn.style.borderColor = "rgba(52,211,153,.35)";
-    } else if (i === index) {
+    } else if (originalIndex === index) {
       btn.style.background = "rgba(251,113,133,.18)";
       btn.style.borderColor = "rgba(251,113,133,.35)";
     }
@@ -7815,6 +7829,7 @@ function resetAll(){
   resetFishingScene();
   closeQuestionModal();
   state.phase = "idle";
+  setTopicSelectorLocked(false);
   setStatus("Progress telah direset. Sedia untuk mula semula.");
   renderTopicSelector();
   updateHud();
