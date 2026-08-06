@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="ms">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>اِبْحَثْ وَفَكِّرْ — Latihan Interaktif</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <button id="soundBtn" class="sound" aria-label="Buka atau tutup bunyi">🔊</button>
+
+    <section id="startScreen" class="screen active start-screen">
+      <div class="stage-wrap">
+        <div class="hero-sign">
+          <h1 class="arabic sign-title" dir="rtl">اِبْحَثْ وَفَكِّرْ</h1>
+        </div>
+
+        <div class="panel start-panel">
+          <img class="mascot mascot-start" id="mascotStart" src="" alt="">
+
+          <div class="start-copy">
+            <p class="tag">BAHAN 6</p>
+            <h2>Latihan Interaktif</h2>
+            <p class="arabic intro" dir="rtl">اِقْرَأِ اللُّغْزَ جَيِّدًا ثُمَّ اخْتَرِ الْإِجَابَةَ الصَّحِيحَةَ.</p>
+            <p class="intro-ms">Baca teka-teki dengan teliti, kemudian pilih jawapan yang betul.</p>
+            <button id="startBtn" class="primary start-cta"><span>Mula</span><span class="divider">|</span><span class="arabic" dir="rtl">اِبْدَأْ</span></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="quizScreen" class="screen quiz-screen">
+      <header class="topbar">
+        <div class="status-card">
+          <div class="status-icon">✦</div>
+          <div class="status-copy">
+            <small>SOALAN</small>
+            <strong id="progress">1 / 8</strong>
+          </div>
+        </div>
+
+        <div class="status-card">
+          <div class="status-icon">◔</div>
+          <div class="status-copy">
+            <small>MASA</small>
+            <strong id="timeLeft">15</strong>
+          </div>
+        </div>
+
+        <div class="status-card">
+          <div class="status-icon">★</div>
+          <div class="status-copy">
+            <small>MARKAH</small>
+            <strong id="score">0 / 8</strong>
+          </div>
+        </div>
+      </header>
+
+      <section class="panel question-panel">
+        <div class="question-shell">
+          <div class="question-visuals">
+            <div class="question-image-box">
+              <img id="questionImage" class="question-image" src="" alt="Gambar soalan">
+            </div>
+            <img id="quizMascot" class="mascot mascot-quiz" src="" alt="">
+          </div>
+          <p class="arabic instruction" dir="rtl">اِخْتَرِ الْكَلِمَةَ الْمُنَاسِبَةَ لِحَلِّ اللُّغْزِ.</p>
+          <h2 id="questionText" class="arabic question" dir="rtl"></h2>
+          <div id="options" class="options"></div>
+          <div id="feedback" class="feedback arabic" dir="rtl" aria-live="polite"></div>
+        </div>
+      </section>
+    </section>
+
+    <section id="resultScreen" class="screen result-screen">
+      <div id="confetti" class="confetti" aria-hidden="true"></div>
+      <div class="panel result-panel">
+        <img class="mascot mascot-result" id="mascotResult" src="" alt="">
+        <div class="stars" aria-label="Tiga bintang"><span>★</span><span>★</span><span>★</span></div>
+        <h1 class="arabic result-title" dir="rtl">مُمْتَازٌ! أَنْتَ ذَكِيٌّ!</h1>
+        <p id="resultMessage">Cemerlang! Kamu bijak!</p>
+        <div id="finalScore" class="final-score">8/8</div>
+        <button id="replayBtn" class="primary"><span class="arabic" dir="rtl">إِعَادَةُ اللَّعِبِ</span><span>Main Semula</span></button>
+      </div>
+    </section>
+  </main>
+  <script src="assets/mascotLobi.js"></script>
+<script src="assets/mascotQuiz.js"></script>
+<script src="assets/mascotResult.js"></script>
+<script src="assets/q1.js"></script>
+<script src="assets/q2.js"></script>
+<script src="assets/q3.js"></script>
+<script src="assets/q4.js"></script>
+<script src="assets/q5.js"></script>
+<script src="assets/q6.js"></script>
+<script src="assets/q7.js"></script>
+<script src="assets/q8.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
